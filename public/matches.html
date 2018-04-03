@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="UTF-8">
+        <title>Kinections | Matches</title>
+
+        <!-- reset -->
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+
+        <!-- font -->
+        <link href="https://fonts.googleapis.com/css?family=Lato:400,900" rel="stylesheet">
+
+        <!-- font awesome -->
+        <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+
+        <!-- our css -->
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+       <!--  <link rel="stylesheet" type="text/css" href="css/chat.css"> -->
+        <link rel="stylesheet" type="text/css" href="css/mobile.css">
+
+
+        <!-- slick css -->
+        <link rel="stylesheet" type="text/css" href="js/slick/slick.css"/>
+        <link rel="stylesheet" type="text/css" href="js/slick/slick-theme.css"/>
+
+        <!-- jquery -->
+        <script src="https://code.jquery.com/jquery.js"></script>
+    </head>
+    <body>
+      <div id="changingPic" class="shadow">
+        <img src="/img/bikes.jpg"/>
+        <img src="/img/deadLift.jpg"/>
+        <img src="/img/Golf.jpeg"/>
+        <img src="/img/weightBar.jpeg"/>
+        <img src="/img/handwrap.jpg"/>
+        <img src="/img/Hiking.jpeg"/>
+        <img src="/img/kayaks.jpeg"/>
+        <img src="/img/weighttape.jpg"/>
+        <img src="/img/ropes.jpg"/>
+        <img src="/img/run.jpg"/>
+        <img src="/img/stretching.jpeg"/>
+        <img src="/img/tennis.jpg"/>
+        <img src="/img/weights.jpeg"/>
+        <img src="/img/yoga.jpeg"/>
+      </div>
+
+        <header>
+            <div class="headerDiv">
+                <a href="/profile"><button class="profileLink" >
+                    <img class="headLogo" src="img/profileLogoNew.png">
+                </button></a>
+                <a href="/judgement"><button class="judgementLink" >
+                    <img class="headLogo" src="img/logoBlack.png">
+                </button></a>
+                <a href="/matches"><button class="matchesLink" >
+                    <img class="headLogoActive" src="img/messageLogoNew.png">
+                </button></a>
+            </div>
+        </header>
+
+        <div id="returnMatch" style="display: none">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
+        <div class="newKinectionsBench">
+            <div class="benchTitle">
+                <h3>New</h3>
+            </div>
+                
+            <div class="newKinectionsDiv">
+            </div>
+        </div>
+
+        <div class="kinectionsBench">
+
+            <div class="benchTitle">
+                <h3>Kinections</h3>
+            </div>
+
+            <div class="kinectionsDiv">
+            </div>
+        </div>
+
+        <div class="content" style="display: none">
+
+            <div class="userCard2">
+                <div class="userCardImg2" style="background-image: url('img/logoBlack.png')"></div>
+
+                <!-- <input type="text" name="name" placeholder="First Name" id="name"><br> -->
+                <!-- may want to change this to class="userCardName" -->
+                <h2 id = "name2" user-id = ""></h2>
+            </div>
+
+            <div class="box2">
+                <div class="chat">
+                    <div class="history">
+                        <ul id="message_block"></ul>
+                    </div>
+                    <form action="" class="messageDiv">
+                        <input type="text" id="m" autocomplete="off"><button id="messageSend">Send</button>
+                    </form>
+
+                </div>
+
+                <div class="bio" style="display: none">
+                    <h3>Basics</h3>
+
+                    <p><span id="gender"></span>, <span id="age"></span></p>
+                    <p><strong>Location: </strong> <span id="location">Unknown</span></p>
+
+                    <h3 class="secTitle">Activities</h3>
+                    <p id="activities"></p>
+
+                    <h3 class="secTitle">Bio</h3>
+                    <p id="bio">Bio not available</p>
+                </div>
+
+
+            </div>
+            <break></break>
+            <div class="profSubDiv">
+                <button id="viewBio">View Profile</button>
+                <button id="viewChat" style="display: none">Chat</button>
+            </div>
+            <div class="judgement">
+            </div>
+        </div>
+
+
+    <!-- <script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script> -->
+    <!-- <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script type="text/javascript" src="js/slick/slick.js"></script>
+    <script type="text/javascript" src="js/matches.js"></script>
+    <script type="text/javascript" src="js/chat.js"></script>
+    </body>
+</html>
