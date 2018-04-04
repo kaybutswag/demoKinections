@@ -11,18 +11,15 @@ function photoSlideshow() {
 }
 
 function cardImgSize() {
-	$('.userCardImg').each(function() {
-		$(this).height($(this).width());
-		$('.history').height($(this).width()-20);
-		// $('#viewChat').width($(this).width());
-		// $('#viewBio').width($(this).width());
-	})
-
+  $('.userCardImg').each(function() {
+    $(this).height($(this).width());
+    $('.history').height($(this).width()-20);
+  })
 }
 
 function slickInit() {
-	$('.newKinectionsDiv').slick({
-  dots: true,
+  $('.newKinectionsDiv').slick({
+  // dots: true,
   infinite: false,
   speed: 300,
   slidesToShow: 4,
@@ -52,14 +49,14 @@ function slickInit() {
       }
     }
   ]
-	});
+  });
 
-	$('.kinectionsDiv').slick({
+  $('.kinectionsDiv').slick({
   // dots: true,
   infinite: false,
   speed: 300,
   slidesToShow: 4,
-  slidesToScroll: 1,
+  slidesToScroll: 4,
   responsive: [
     {
       breakpoint: 1024,
@@ -71,14 +68,21 @@ function slickInit() {
       }
     },
     {
-      breakpoint: 1003,
+      breakpoint: 600,
       settings: {
         slidesToShow: 2,
         slidesToScroll: 2
       }
+    },
+    {
+      breakpoint: 480,
+      settings: {
+        slidesToShow: 1,
+        slidesToScroll: 1
+      }
     }
   ]
-	});
+  });
 }
 
 function showInfo(number){
@@ -156,54 +160,53 @@ $(document).ready(function(){
           thisCard.append("<h4 id='name'>"+data[i].name+"</h4>");
           $(".newKinectionsDiv").append(thisCard);
         }
-        //slickInit();
       }
-      //cardImgSize();
     });
 
   var promiseTwo = $.get("/api/myChats", function(data2) {
-      if(data2==="nochats"){
-        $(".kinectionsDiv").empty();
-        $(".kinectionsBench").css('display','none');
-        $(".newKinectionsBench").attr("style", "margin-bottom: 300px;")
-      }
-      else{
-        $(".kinectionsBench").css('display','block');
-        $(".kinectionsDiv").empty();
-        for(var i=0;i<data2.length;i++){
-          var thatCard=$("<div>");
-          thatCard.addClass("userCard");
-          thatCard.attr("data-value",data2[i].UserId);
-          var thatCardImg=$("<div>");
-          thatCardImg.addClass("userCardImg");
-          if (data2[i].img == null) {
-            thatCardImg.attr("style","background-image: url('img/logoBlack.png')");
-          } else {
-            thatCardImg.attr("style","background-image: url('"+data2[i].img+"')");
-          };
-          thatCard.append(thatCardImg);
-          thatCard.append("<h4 id='name'>"+data2[i].name+"</h4>");
-          $(".kinectionsDiv").append(thatCard);
-        }
-      //slickInit();  
-      //cardImgSize();
+    if(data2==="nochats"){
+      $(".kinectionsDiv").empty();
+      $(".kinectionsBench").hide();
+      $(".newKinectionsBench").attr("style", "margin-bottom: 300px;")
     }
-    });
+    else{
+      $(".kinectionsBench").css('display','block');
+      $(".kinectionsDiv").empty();
+      $(".kinectionsBench").show();
+      for(var i=0;i<data2.length;i++){
+        var thatCard=$("<div>");
+        thatCard.addClass("userCard");
+        thatCard.attr("data-value",data2[i].UserId);
+        var thatCardImg=$("<div>");
+        thatCardImg.addClass("userCardImg");
+        if (data2[i].img == null) {
+          thatCardImg.attr("style","background-image: url('img/logoBlack.png')");
+        } else {
+          thatCardImg.attr("style","background-image: url('"+data2[i].img+"')");
+        };
+        thatCard.append(thatCardImg);
+        thatCard.append("<h4 id='name'>"+data2[i].name+"</h4>");
+        $(".kinectionsDiv").append(thatCard);
+      }
+    }
+  });
 
   Promise.all([promiseOne, promiseTwo]).then(function(){
     slickInit();
     cardImgSize();
   })
 
-	$('.newKinectionsBench').on("click",".userCard",function () {
-		$(".newKinectionsBench").hide();
-		$(".kinectionsBench").hide();
+  $('.newKinectionsBench').on("click",".userCard",function () {
+    $(".newKinectionsBench").hide();
+    $(".kinectionsBench").hide();
     idforcontent=$(this).attr("data-value");
     showInfo(idforcontent);
-		$(".content").show();
-		$("#returnMatch").show();
-		cardImgSize();
-	});
+    $(".content").show();
+    if ($(window).width() > 1003) {
+      $("#returnMatch").show();
+    }
+    cardImgSize();
+  });
 
   $('.kinectionsBench').on("click",".userCard",function () {
     $(".newKinectionsBench").hide();
@@ -211,33 +214,39 @@ $(document).ready(function(){
     idforcontent=$(this).attr("data-value");
     showInfo(idforcontent);
     $(".content").show();
-    $("#returnMatch").show();
+    if ($(window).width() > 1003) {
+      $("#returnMatch").show();
+    }
     cardImgSize();
   });
 
-	$('#returnMatch').click(function() {
+  $('#returnMatch').click(function() {
     location.reload();
-	});
+  });
 
-	$('#viewBio').click(function() {
-		$(".chat").hide();
-		$(".bio").show();
-		$("#viewChat").show();
-		$("#viewBio").hide();
-	})
+  $('.returnMatchMobile').click(function() {
+    location.reload();
+  });
 
-	$('#viewChat').click(function() {
-		$(".bio").hide();
-		$(".chat").show();
-		$("#viewBio").show();
-		$("#viewChat").hide();
-	})
+  $('#viewBio').click(function() {
+    $(".chat").hide();
+    $(".bio").show();
+    $("#viewChat").show();
+    $("#viewBio").hide();
+  })
+
+  $('#viewChat').click(function() {
+    $(".bio").hide();
+    $(".chat").show();
+    $("#viewBio").show();
+    $("#viewChat").hide();
+  })
 
 
   setInterval(photoSlideshow, 12000);
 });
 
 $(window).resize(function() {
-	slickInit();
-	cardImgSize();
+  slickInit();
+  cardImgSize();
 });
