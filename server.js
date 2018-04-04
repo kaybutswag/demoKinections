@@ -8,7 +8,6 @@ var session = require("express-session");
 var io = require("socket.io")(server);
 var passport = require("./config/passport");
 var db = require("./models");
-// var Upload = require('s3-uploader');
 
 var PORT = process.env.PORT || 8000;
 
@@ -19,6 +18,10 @@ app.use(bodyParser({limit: "50mb"}));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static("public"));
+
+app.use(session({ secret: "W929Ugh5TY3rz", resave: true, saveUninitialized: true }));
+ app.use(passport.initialize());
+ app.use(passport.session());
 
 
 require("./routes/apiRoutes.js")(app);
