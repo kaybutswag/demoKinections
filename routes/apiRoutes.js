@@ -421,7 +421,6 @@ module.exports = function(app) {
       }
     });
   });
-
   //get matches for page
 
   app.get("/api/myMatches",function(req,res){
