@@ -99,7 +99,6 @@ module.exports = function(app) {
       }).then(function(){
         res.json("next");
       }).catch(function(error){
-        console.log(error);
         res.json("error"); 
       });
 
@@ -119,34 +118,35 @@ module.exports = function(app) {
 
 
 //updates login location
-  app.put("/api/update-location", function(req, res) {
-    myLatitude = req.body.latitude;
-    myLongitude = req.body.longitude;
+//****REMOVED FOR DEMO***
+  // app.put("/api/update-location", function(req, res) {
+  //   myLatitude = req.body.latitude;
+  //   myLongitude = req.body.longitude;
     
-    if(myLatitude !== 'a' && myLongitude !== 'a') {
-      db.User.update({
-        latitude: myLatitude,
-        longitude: myLongitude
-      }, {
-        where: {
-          email: req.user.email
-        }
-      }).then(function(response){
-        res.end();
-      });
-    }
-    else {
-      db.User.findOne({
-        where: {
-          email: req.user.email
-        }
-      }).then(function(response){
-        myLatitude = response.dataValues.latitude;
-        myLongitude = response.dataValues.longitude;
-        res.end();
-      });
-    }
-  });
+  //   if(myLatitude !== 'a' && myLongitude !== 'a') {
+  //     db.User.update({
+  //       latitude: myLatitude,
+  //       longitude: myLongitude
+  //     }, {
+  //       where: {
+  //         email: req.user.email
+  //       }
+  //     }).then(function(response){
+  //       res.end();
+  //     });
+  //   }
+  //   else {
+  //     db.User.findOne({
+  //       where: {
+  //         email: req.user.email
+  //       }
+  //     }).then(function(response){
+  //       myLatitude = response.dataValues.latitude;
+  //       myLongitude = response.dataValues.longitude;
+  //       res.end();
+  //     });
+  //   }
+  // });
 
   //gets user's age
   app.post("/api/get-age", function(req, res){
@@ -182,6 +182,15 @@ module.exports = function(app) {
   app.post("/api/filter-judgees", function(req, res){
     var sportsArray = [];
     var list1=[];
+
+    db.User.findOne({
+      where: {
+        email: req.user.email
+      }
+    }).then(function(response){
+      myLatitude=response.latitude;
+      myLongitude=response.longitude;
+    });
 
 
     for(var i = 0; i < req.body.sports.length; i++) {
@@ -298,7 +307,8 @@ module.exports = function(app) {
   }
 
   //this will push id into likes
-  app.put("/api/change-likes", function(req, res) {
+  app.post("/api/change-likes", function(req, res) {
+    console.log("here"+req);
     var myLikes;
     var theirLikes;
     var myId = req.session.passport.user.id;

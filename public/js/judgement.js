@@ -29,39 +29,41 @@ function photoSlideshow() {
   counter = (counter + 1) % $("#changingPic img").length;
 }
 
-function updateLocation(userAge) {
-	if(navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(function(position){
-			updateUserLocation(position.coords.latitude, position.coords.longitude, userAge);
-		}, function(error){
-			$("#location-unavailable").text("Could not update your location");
-			updateUserLocation('a', 'a', userAge);
-			//sendPreferences(userAge);
-		});
-	}
-	else {
-		$("#location-unavailable").text("Your browser did not let us store your location.");
-		updateUserLocation('a', 'a', userAge);
-		//sendPreferences(userAge);
-	}
-}
 
-function updateUserLocation(latitude, longitude, userAge) {
-	var updatedLocation = {
-		latitude: latitude,
-		longitude: longitude
-	};
+//**Removed for Demo**//
+// function updateLocation(userAge) {
+// 	if(navigator.geolocation) {
+// 		navigator.geolocation.getCurrentPosition(function(position){
+// 			updateUserLocation(position.coords.latitude, position.coords.longitude, userAge);
+// 		}, function(error){
+// 			$("#location-unavailable").text("Could not update your location");
+// 			updateUserLocation('a', 'a', userAge);
+// 			//sendPreferences(userAge);
+// 		});
+// 	}
+// 	else {
+// 		$("#location-unavailable").text("Your browser did not let us store your location.");
+// 		updateUserLocation('a', 'a', userAge);
+// 		//sendPreferences(userAge);
+// 	}
+// }
 
-	$.ajax({
-		type: "PUT",
-		url: "/api/update-location",
-		data: updatedLocation
-	}).then(function(error){
-		if(error)
-			("#error-message").text("Unable to find potential Kinections.");
-		sendPreferences(userAge);
-	});
-}
+// function updateUserLocation(latitude, longitude, userAge) {
+// 	var updatedLocation = {
+// 		latitude: latitude,
+// 		longitude: longitude
+// 	};
+
+// 	$.ajax({
+// 		type: "PUT",
+// 		url: "/api/update-location",
+// 		data: updatedLocation
+// 	}).then(function(error){
+// 		if(error)
+// 			("#error-message").text("Unable to find potential Kinections.");
+// 		sendPreferences(userAge);
+// 	});
+// }
 
 function autoPopulateModal(userAge) {
 	var promise = $.ajax({
@@ -73,7 +75,7 @@ function autoPopulateModal(userAge) {
 	});
 
 	Promise.all([promise]).then(function(){
-		updateLocation(userAge);
+		sendPreferences(userAge);
 	});
 }
 
@@ -182,14 +184,17 @@ function showCard(){
 }
 
 function addLike(){
+	console.log("like reached");
 	var likeId=$("#name").attr("user-id");
+
+	console.log(likeId);
 
 	var currentUser={
 		likeId:likeId
 	};
 
 	$.ajax({
-		type: "PUT",
+		type: "POST",
 		url: "/api/change-likes",
 		data: currentUser
 	}).then(function(matchNotification){
@@ -236,8 +241,9 @@ $(document).ready(function(){
 		autoPopulateModal(userAge);
 	});
 
-	$("#kinect").on("click",function(event){
+	$(".judgement").on("click",'#kinect',function(event){
 		event.preventDefault();
+
 		$("form").first().animate({
 			left: "1200px"
 		}, function(){
@@ -251,7 +257,7 @@ $(document).ready(function(){
 		});
 	});
 
-	$("#reject").on("click",function(event){
+	$(".judgement").on("click",'#reject',function(event){
 		event.preventDefault();
 		$("form").first().animate({
 			left: "-1200px"
