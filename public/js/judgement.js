@@ -1,550 +1,285 @@
-var db = require("../models");
-var passport = require("../config/passport.js");
+var currentProfile=0;
+var counter=0;
+var myBigArray = [];
 
-//new user api
-module.exports = function(app) {
+function shuffleArray(arr){
+	for(var i = 1; i < arr.length; i++) {
+		var random = Math.floor(Math.random() * (i + 1));
+		if(random !== i) {
+			var dummy = arr[random];
+			arr[random] = arr[i];
+			arr[i] = dummy;
+		}
+	}
+	return arr;
+}
+ 
+function cardImgSize() {
+	$('.userCardImg').each(function() {
+		$(this).height($(this).width());
+	})
+}
 
-  var maxdistance;
-  var myLatitude;
-  var myLongitude;
+function photoSlideshow() {
+  if(counter > 0)
+    $("#changingPic img").eq(counter - 1).removeClass("opaque");
+  else
+    $("#changingPic img").last().removeClass("opaque");
+  $("#changingPic img").eq(counter).addClass("opaque");
+  counter = (counter + 1) % $("#changingPic img").length;
+}
 
-  app.post("/api/new-user", function(req, res, next) {
-    var lastid;
-    var newEmail = req.body.email;
-    var newPassword = req.body.password;
-    myLatitude = req.body.latitude;
-    myLongitude = req.body.longitude;
+function updateLocation(userAge) {
+	if(navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(function(position){
+			updateUserLocation(position.coords.latitude, position.coords.longitude, userAge);
+		}, function(error){
+			$("#location-unavailable").text("Could not update your location");
+			updateUserLocation('a', 'a', userAge);
+			//sendPreferences(userAge);
+		});
+	}
+	else {
+		$("#location-unavailable").text("Your browser did not let us store your location.");
+		updateUserLocation('a', 'a', userAge);
+		//sendPreferences(userAge);
+	}
+}
 
-    db.User.create({
-      email: newEmail,
-      password: newPassword,
-      latitude: myLatitude,
-      longitude: myLongitude
-    }).then(function(result) {
-      db.Match.create({
-        email: newEmail,
-        UserId: result.id
-      });
-      res.json("success");
-    }).catch(function(error){
-      res.json(error); 
-    });  
-  });
+function updateUserLocation(latitude, longitude, userAge) {
+	var updatedLocation = {
+		latitude: latitude,
+		longitude: longitude
+	};
 
-//authenticates returning user
-  app.post("/api/login-user", function(req, res, next) {
-    passport.authenticate("local", function(error, user, info){
-      if(error)
-        return res.json("error");
-      else if (user === false){
-        return res.json(info);
-      }
-      else {
-        req.login(user, function(err){
-          if(err)
-            return next(err);
-          else
-            return res.json(info);
-        });
-      }
-    })(req, res, next);
-  });
+	$.ajax({
+		type: "PUT",
+		url: "/api/update-location",
+		data: updatedLocation
+	}).then(function(error){
+		if(error)
+			("#error-message").text("Unable to find potential Kinections.");
+		sendPreferences(userAge);
+	});
+}
 
-//sends form data to database
-  app.post("/api/user-form", function(req, res) {
-    var userId;
+function autoPopulateModal(userAge) {
+	var promise = $.ajax({
+		type: "POST",
+		url: "/api/get-default-filter"
+	}).then(function(sportsPreferences){
+		for(var i = 0; i < sportsPreferences.length; i++)
+			$("#" + sportsPreferences[i]).attr("checked", true);
+	});
 
-    db.User.findOne({
-      where: {
-        email: req.user.email
-      }
-    }).then(function(response){
-      userId = response.dataValues.id;
+	Promise.all([promise]).then(function(){
+		updateLocation(userAge);
+	});
+}
 
-      db.Form.upsert({
-        email: req.user.email,
-        name: req.body.name,
-        gender: req.body.gender,
-        dob: req.body.dob,
-        img: req.body.img,
-        fileName: req.body.fileName,
-        primaryLocation: req.body.primaryLocation,
-        weightlift: req.body.weightlift,
-        run: req.body.run,
-        walk: req.body.walk,
-        swim: req.body.swim,
-        surf: req.body.surf,
-        bike: req.body.bike,
-        yoga: req.body.yoga,
-        pilates: req.body.pilates,
-        cardio: req.body.cardio,
-        dance: req.body.dance,
-        rock: req.body.rock,
-        gymnastics: req.body.gymnastics,
-        bowl: req.body.bowl,
-        rowing: req.body.rowing,
-        tennis: req.body.tennis,
-        baseball: req.body.baseball,
-        basketball: req.body.basketball,
-        football: req.body.football,
-        soccer: req.body.soccer,
-        rugby: req.body.rugby,
-        volleyball: req.body.volleyball,
-        golf: req.body.golf,
-        hockey: req.body.hockey,
-        ice: req.body.ice,
-        skateboard: req.body.skateboard,
-        bio: req.body.bio,
-        UserId: userId
-      }).then(function(){
-        res.json("next");
-      }).catch(function(error){
-        console.log(error);
-        res.json("error"); 
-      });
+function sendPreferences(userAge) {
+	var miles = $("#maxRadius").text();
 
-    });  
-  });
+	var minAge = $("#minAge").val();
 
-//
-  app.get("/api/user-preferences", function(req, res) {
-    db.Form.findOne({
-      where: {
-        email: req.user.email
-      }
-    }).then(function(response){
-      res.json(response);
-    });
-  });
+	var maxAge = $("#maxAge").val();
+
+	var genderselect=[];
+	var selectval=$("#genderPref option:selected").val();
+
+	if(selectval==="all")
+		genderselect=["Male","Female","Other"];
+	else
+		genderselect=[selectval];
+
+	var sports=[];
+
+    var fieldsToFill = ["weightlift", "run", "walk", "swim", "surf", "bike", "yoga", "pilates", "cardio", "dance", "rock", "gymnastics", "bowl",
+    "rowing", "tennis", "baseball", "basketball", "football", "soccer", "rugby", "volleyball", "golf", "hockey", "ice", "skateboard"];
 
 
-//updates login location
-  app.put("/api/update-location", function(req, res) {
-    myLatitude = req.body.latitude;
-    myLongitude = req.body.longitude;
-    
-    if(myLatitude !== 'a' && myLongitude !== 'a') {
-      db.User.update({
-        latitude: myLatitude,
-        longitude: myLongitude
-      }, {
-        where: {
-          email: req.user.email
+    for(var i = 0; i < fieldsToFill.length; i++) {
+        var fieldId = fieldsToFill[i];
+        var field = $("#" + fieldId);
+
+        if(field.is(":checked")){
+            sports.push(fieldId);
         }
-      }).then(function(response){
-        res.end();
-      });
     }
-    else {
-      db.User.findOne({
-        where: {
-          email: req.user.email
-        }
-      }).then(function(response){
-        myLatitude = response.dataValues.latitude;
-        myLongitude = response.dataValues.longitude;
-        res.end();
-      });
-    }
-  });
-
-  //gets user's age
-  app.post("/api/get-age", function(req, res){
-    db.Form.findOne({
-      where: {
-        email: req.user.email
-      }
-    }).then(function(data){
-      var userDOB = data.dataValues.dob;
-      res.json(userDOB);
-    });
-  });
-
-  app.post("/api/get-default-filter", function(req, res){
-    db.Form.findOne({
-      where: {
-        email: req.user.email
-      }
-    }).then(function(data){
-      var sportsPreferences = [];
-      var sportsArray = ["weightlift", "run", "walk", "swim", "surf", "bike", "yoga", "pilates", "cardio", "dance", "rock", "gymnastics", "bowl", 
-      "rowing", "tennis", "baseball", "basketball", "football", "soccer", "rugby", "volleyball", "golf", "hockey", "ice", "skateboard"];
-      for(var i = 0; i < sportsArray.length; i++) {
-        if(data.dataValues[sportsArray[i]] === true) {
-          sportsPreferences.push(sportsArray[i]);
-        }
-      }
-      res.json(sportsPreferences);
-    });
-  });
-
-  //our match function
-  app.post("/api/filter-judgees", function(req, res){
-    var sportsArray = [];
-    var list1=[];
 
 
-    for(var i = 0; i < req.body.sports.length; i++) {
-      var sport = req.body.sports[i];
-      var newSport = {};
-      newSport[sport] = 1;
-      sportsArray.push(newSport);
-    }   
+	var preferences = {
+		genderselect: genderselect,
+		miles: miles,
+		minAge: minAge,
+		maxAge: maxAge,
+		sports: sports
+	};
 
-    maxdistance = req.body.miles;
+	$.ajax({
+		type: "POST",
+		url: "/api/filter-judgees",
+		data: preferences
+	}).then(function(matches){
+		matches = shuffleArray(matches);
+		myBigArray = matches;
+		currentProfile = 0;
+		$("#loader_judgement").addClass("display-none");
+		$("#loader_judgement").removeClass("fa-spin");
+		$("form").first().removeClass("display-none");
+		$(".exhausted-options").addClass("display-none");
+		showCard();
+	});
+}
 
-    db.Form.findAll({
-      where: {
-        $or: sportsArray,
-        gender: {
-          $in: req.body.genderselect
-        },
-        email: {
-          $not: req.user.email
-        },
-        where: db.sequelize.where(db.sequelize.fn('TIMESTAMPDIFF', db.sequelize.literal("year"), db.sequelize.col("dob"), db.sequelize.fn('NOW')), "<=", req.body.maxAge),
-        $and:{
-          where: db.sequelize.where(db.sequelize.fn('TIMESTAMPDIFF', db.sequelize.literal("year"), db.sequelize.col("dob"), db.sequelize.fn('NOW')), ">=", req.body.minAge)
-      }
-    },
-      include:[db.User]
-    }).then(function(data){
-      filterResults(res,req,data,maxdistance)
-      });    
-  });
+function showCard(){
+	if(currentProfile + 1 > myBigArray.length) {
+		$("form").first().addClass("display-none");
+		$(".exhausted-options").removeClass("display-none");
+	}
+	else {
+		$("form").first().removeClass("display-none");
+		var theirDOB = moment(myBigArray[currentProfile].dob).utc().format('YYYY-MM-DD');
+		var theirAge = moment().diff(moment(theirDOB), "years")
+		$("#name").text(myBigArray[currentProfile].name);
+		$("#name").attr("user-id", myBigArray[currentProfile].UserId);
+		$(".userCardImg").empty();
+		if(myBigArray[currentProfile].img !== null)
+			$(".userCardImg").attr("style","background-image: url('"+myBigArray[currentProfile].img+"')");
+		else
+			$(".userCardImg").attr("style","background-image: url('img/logoBlack.png')");
+		$('#gender').text(myBigArray[currentProfile].gender);
+		$('#location').text(myBigArray[currentProfile].primaryLocation);
+		$('#age').text(theirAge);
+		$('#bio').text(myBigArray[currentProfile].bio);
 
-  function filterResults(res,req,data,maxdistance){
-    var userlong;
-    var userlat;
+		var sports2="";
 
-    var promises=[];
+	    var fieldsToFill = ["weightlift", "run", "walk", "swim", "surf", "bike", "yoga", "pilates", "cardio", "dance", "rock", "gymnastics", "bowl",
+	    "rowing", "tennis", "baseball", "basketball", "football", "soccer", "rugby", "volleyball", "golf", "hockey", "ice", "skateboard"];
 
-    var nearOptions=[];
-    for(var i=0;i<data.length;i++){
-      var promise=db.User.findOne({
-        where: {
-          email: data[i].email
-        }
-      }).then(function(userdata){
-          userlong=userdata.longitude;
-          userlat=userdata.latitude;
+	    var actualActivity = ["Weightlifting", "Running", "Walking", "Swimming", "Surfing", "Biking", "Yoga", "Pilates", "Cardio", "Dancing",
+	    "Rock Climbing", "Gymnastics", "Bowling", "Rowing", "Tennis", "Baseball", "Basketball", "Football", "Soccer", "Rugby", "Volleyball",
+	    "Golfing", "Hockey", "Ice Skating", "Skateboarding"];
 
-          if (getDistance(userlat,userlong,myLatitude,myLongitude)<=maxdistance)
-              nearOptions.push(userdata);
-      });
-      promises.push(promise);
-    }
-    
-    Promise.all(promises).then(function(){
-      removeMatches(res, req, nearOptions)
-    });
-  }
 
-  function getDistance(latitude1,longitude1,latitude2,longitude2) {
-    var radlatitude1 = Math.PI * latitude1 / 180;
-    var radlatitude2 = Math.PI * latitude2 / 180;
-    var theta = longitude1 - longitude2;
-    var radtheta = Math.PI * theta / 180;
-    var distance = Math.sin(radlatitude1) * Math.sin(radlatitude2) + Math.cos(radlatitude1) * Math.cos(radlatitude2) * Math.cos(radtheta);
-    distance = Math.acos(distance);
-    distance = distance * 180 / Math.PI;
-    distance = distance * 60 * 1.1515;
-    return distance;
-  }
+	    for(var i = 0; i < fieldsToFill.length; i++) {
+	        var activity = fieldsToFill[i];
+	        if(myBigArray[currentProfile][activity] === true) {
+	            if(sports2 === "") {
+	            	sports2 += actualActivity[i];
+	            }
+	            else
+	            	sports2 += ", " + actualActivity[i];
+	        }
+	    }
 
-  function removeMatches(res, req, lessUsers){
-    var myLikes=[];
-    var showOptions=[];
+	    $("#activities").text(sports2);
 
-    db.Match.findOne({
-      where: {
-        email: req.user.email
-      }
-    }).then(function(mydata){
-        if(mydata.myLikes !== null)
-          myLikes=mydata.myLikes.split(",");
+	    currentProfile++;
+		cardImgSize();
+	}
+}
 
-        for(var i=0;i<lessUsers.length;i++){
-          if(myLikes.indexOf(lessUsers[i].id.toString())===-1){
-            showOptions.push(lessUsers[i]);
-          }
-        }
-        getFormData(res, showOptions);
-    });
-  }
+function addLike(){
+	var likeId=$("#name").attr("user-id");
 
-  function getFormData(res,userdata2) {
-    var thisid;
-    var cardOptions=[];
-    var promises=[];
+	var currentUser={
+		likeId:likeId
+	};
 
-    for(var i=0;i<userdata2.length;i++){
-      thisEmail=userdata2[i].email;
+	$.ajax({
+		type: "PUT",
+		url: "/api/change-likes",
+		data: currentUser
+	}).then(function(matchNotification){
+		if(matchNotification.result === "match")
+			notifyAboutMatch(matchNotification.myName, matchNotification.theirName, matchNotification.myPhoto, matchNotification.theirPhoto);
+	});
+}
 
-      var promise=db.Form.findOne({
-          where: {
-          email: thisEmail
-        }
-      }).then(function(userdata3){
-          cardOptions.push(userdata3);
-    });
+function notifyAboutMatch(myName, theirName, myPhoto, theirPhoto) {
+	if(myPhoto !== null)
+		$('#matchOneImg').attr("style", "background-image: url("+myPhoto+")");
+	else 
+		$('#matchOneImg').attr("style", "background-image: url('img/logoBlack.png')");
+	if(theirPhoto !== null)
+		$('#matchTwoImg').attr("style", "background-image: url("+theirPhoto+")");
+	else
+		$('#matchTwoImg').attr("style", "background-image: url('img/logoBlack.png')");
+	$('#matchOneName').text(myName);
+	$('#matchTwoName').text(theirName);
+	cardImgSize();
+    var href = $('#matchLink').attr('href');
+    window.location.href = href;
+}
 
-      promises.push(promise);
-    }
-    
-    Promise.all(promises).then(function(){
-      res.json(cardOptions);
-    });
-  }
+$(document).ready(function(){
+	var userAge = -2;
 
-  //this will push id into likes
-  app.put("/api/change-likes", function(req, res) {
-    var myLikes;
-    var theirLikes;
-    var myId = req.session.passport.user.id;
-    var theirId = req.body.likeId;
-    var myEmail = req.user.email;
-    var isMatch = false;
+	var slider = document.getElementById("myRadius")
+	var output = document.getElementById("maxRadius");
+	output.innerHTML = slider.value;
 
-    var myName;
-    var theirName;
-    var myPhoto;
-    var theirPhoto;
-    var response = {};
+	slider.oninput = function() {
+		output.innerHTML = this.value;
+	}
 
-    db.Match.findOne({
-      where: {
-        email: myEmail
-      }
-    }).then(function(results){
-      myLikes = results.dataValues.myLikes;
-      if(myLikes === null)
-        myLikes = theirId;
-      else
-        myLikes += "," + theirId;
-      
-      db.Match.update({
-        myLikes: myLikes
-      }, {
-        where: {
-          email: myEmail
-        }
-      });    
-    });
+	$.ajax({
+		type: "POST",
+		url: "/api/get-age"
+	}).then(function(dob){
+		userDOB = moment(dob).utc().format("YYYY-MM-DD");
+		userAge = moment().diff(moment(userDOB), "years");
+		$("#minAge").val(userAge - 5);
+		$("#maxAge").val(userAge + 5);
+		autoPopulateModal(userAge);
+	});
 
-    db.Match.findOne({
-      where:{
-        UserId: theirId
-      }
-    }).then(function(results2){
-      if(results2.dataValues.myLikes!==null){
-        theirLikes=results2.dataValues.myLikes.split(",");
-      }
-      else {
-        theirLikes=[];
-      }
+	$("#kinect").on("click",function(event){
+		event.preventDefault();
+		$("form").first().animate({
+			left: "1200px"
+		}, function(){
+			$("form").first().addClass("display-none");
+			$("form").first().animate({
+				left: "0px"
+			}, function() {
+				addLike();
+				showCard();
+			});
+		});
+	});
 
-      if(theirLikes.indexOf(myId.toString())!==-1){
-        isMatch = true;           
-        db.Match.findOne({
-          where: {
-            email: myEmail
-          }
-        }).then(function(myProfile){
-          var existingMatches = myProfile.dataValues.myMatches;
-          if(existingMatches === null)
-            existingMatches = req.body.likeId;
-          else
-            existingMatches += "," + theirId;
-          
-          db.Match.update({
-            myMatches: existingMatches
-          }, {
-            where: {
-              email: myEmail
-            }
-          });
-        });
+	$("#reject").on("click",function(event){
+		event.preventDefault();
+		$("form").first().animate({
+			left: "-1200px"
+		}, function(){
+			$("form").first().addClass("display-none");
+			$("form").first().animate({
+				left: "0px"
+			}, function() {
+				showCard();
+			});
+		});
+	});
 
-        db.Match.findOne({
-          where: {
-            UserId: theirId
-          }
-        }).then(function(theirProfile){
-          var existingMatches = theirProfile.dataValues.myMatches;
-          if(existingMatches === null)
-            existingMatches = myId;
-          else
-            existingMatches += "," + myId;
-          
-          db.Match.update({
-            myMatches: existingMatches
-          }, {
-            where: {
-              UserId: theirId
-            }
-          });          
-        });
-      }
+	$("#submitActivities").on("click", function(){
+		if(userAge > 0) {
+			$("#loader_judgement").attr("class", "fa-spin")
+			$("#loader_judgement").removeClass("display-none");
+			$("form").first().addClass("display-none");
+			$(".exhausted-options").addClass("display-none");
+			sendPreferences(userAge);
+		}
+	});
 
-      if(isMatch === true) {
-        response.result = "match";
-        var promise1 = db.Form.findOne({
-          where: {
-            email: myEmail
-          }
-        }).then(function(myInfo){
-          myName = myInfo.dataValues.name;
-          myPhoto = myInfo.dataValues.img;
-          response.myName = myName; 
-          response.myPhoto = myPhoto;
-        });
-
-        var promise2 = db.Form.findOne({
-          where: {
-            UserId: theirId
-          }
-        }).then(function(theirInfo){
-          theirName = theirInfo.dataValues.name;
-          theirPhoto = theirInfo.dataValues.img;
-          response.theirName = theirName;
-          response.theirPhoto = theirPhoto;
-        });
-
-        Promise.all([promise1, promise2]).then(function() {
-          res.json(response);
-        });
-      }
-      else {
-        response.result = "no match";
-        res.json(response);
-      }
-    });
-  });
-
-  //get matches for page
-
-  app.get("/api/myMatches",function(req,res){
-    db.Match.findOne({
-      where:{
-        UserID:req.session.passport.user.id
-      }
-    }).then(function(matchdata){
-      var chats=matchdata.dataValues.myChats;
-      var matches=matchdata.dataValues.myMatches;
-      if(matches===null){
-        res.send("nada");
-      }
-      else{
-        var arrayOfMatches = matches.split(",");
-        var arrayOfChats;
-        if(chats !== null)
-          arrayOfChats = chats.split(",");
-        else 
-          arrayOfChats = [];
-        var matchNoChat=[];
-
-        for(var i=0;i<arrayOfMatches.length;i++){
-          if(arrayOfChats.indexOf(arrayOfMatches[i])===-1)
-            matchNoChat.push(arrayOfMatches[i]);
-        }
-        if(matchNoChat.length===0){
-          res.send("nada");
-        }
-        else{
-        pullMatches(res,matchNoChat);
-      }
-      }
-  });
-
+	cardImgSize();
+  		
+	setInterval(photoSlideshow, 9000);
 });
 
-
-function pullMatches(res,matches){
-
-    var MatchCards=[];
-    var promises=[];
-
-    for(var i=0;i<matches.length;i++){
-      thisMatch=matches[i];
-
-      var promise=db.Form.findOne({
-          where: {
-          UserId: thisMatch
-        }
-      }).then(function(matchforms){
-          MatchCards.push(matchforms);
-    });
-
-      promises.push(promise);
-    }
-    
-    Promise.all(promises).then(function(){
-      res.json(MatchCards);
-    });
-  }
-
-
-  app.get("/api/myChats",function(req,res){
-    db.Match.findOne({
-      where:{
-        UserId:req.session.passport.user.id
-      }
-    }).then(function(matchdata){
-      var chats=matchdata.dataValues.myChats;
-      if(chats===null){
-        res.send("nochats");
-      }
-      else{
-        var arrayOfChats = chats.split(",");
-
-        pullChats(res,arrayOfChats);
-      }
-  });
-
+$(window).resize(function() {
+	cardImgSize();
 });
-
-
-function pullChats(res,chats){
-
-    var ChatCards=[];
-    var promises=[];
-
-    for(var i=0;i<chats.length;i++){
-      thisChat=chats[i];
-
-      var promise=db.Form.findOne({
-        where: {
-          UserId: thisChat
-        }
-      }).then(function(chatforms){
-          ChatCards.push(chatforms);
-    });
-
-      promises.push(promise);
-    }
-    
-    Promise.all(promises).then(function(){
-      res.json(ChatCards);
-    });
-  }
-
-  app.post("/api/getUserInfo", function(req, res){
-    db.Form.findOne({
-      where: {
-        UserId: req.body.id 
-      }
-    }).then(function(userInfo){
-      res.json(userInfo);
-    });
-  });
-
-
-//logout but saves function
-
-  app.get("/logout", function(req, res){
-    req.logout();
-    res.redirect("/index");
-  });
-  
-};
