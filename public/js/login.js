@@ -9,53 +9,53 @@ function photoSlideshow() {
   counter = (counter + 1) % $("#changingPic img").length;
 }
 
-function getLocation(email, password) {
-	showIndicator();
-	if(navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(function(position){
-			hideLoader();
-			createNewUser(email, password, position.coords.latitude, position.coords.longitude);
-		}, function(error){
-			hideLoader();
-			createNewUser(email, password, null, null);
-		});
-	}
-	else {
-		hideLoader();
-		createNewUser(email, password, null, null);
-	}
-}
+// function getLocation(email, password) {
+// 	showIndicator();
+// 	if(navigator.geolocation) {
+// 		navigator.geolocation.getCurrentPosition(function(position){
+// 			hideLoader();
+// 			createNewUser(email, password, position.coords.latitude, position.coords.longitude);
+// 		}, function(error){
+// 			hideLoader();
+// 			createNewUser(email, password, null, null);
+// 		});
+// 	}
+// 	else {
+// 		hideLoader();
+// 		createNewUser(email, password, null, null);
+// 	}
+// }
 
-function createNewUser(email, password, latitude, longitude) {
-	var newUser = {
-		email: email,
-		password: password,
-		latitude: latitude,
-		longitude: longitude
-	};
+// function createNewUser(email, password, latitude, longitude) {
+// 	var newUser = {
+// 		email: email,
+// 		password: password,
+// 		latitude: latitude,
+// 		longitude: longitude
+// 	};
 
-	$.ajax({
-		type: "POST",
-		url: "/api/new-user",
-		data: newUser
-	}).then(function(result){
-		console.log(result);
-		if(result === "success")
-			logInUser(email, password, "newUser");
-		else {
-			if("errors" in result) {
-				if(result.errors[0].path === "email")
-					$("form p").text("The email you entered is not valid.");
-				else if(result.errors[0].path === "password")
-					$("form p").text("The password you entered is not valid.");
-			}
-			else if ("original" in result && "code" in result.original && result.original.code === "ER_DUP_ENTRY")
-				$("form p").text("That email already exists");
-			else
-				$("form p").text("Please allow us to access your location.");
-		}
-	});
-}
+// 	$.ajax({
+// 		type: "POST",
+// 		url: "/api/new-user",
+// 		data: newUser
+// 	}).then(function(result){
+// 		console.log(result);
+// 		if(result === "success")
+// 			logInUser(email, password, "newUser");
+// 		else {
+// 			if("errors" in result) {
+// 				if(result.errors[0].path === "email")
+// 					$("form p").text("The email you entered is not valid.");
+// 				else if(result.errors[0].path === "password")
+// 					$("form p").text("The password you entered is not valid.");
+// 			}
+// 			else if ("original" in result && "code" in result.original && result.original.code === "ER_DUP_ENTRY")
+// 				$("form p").text("That email already exists");
+// 			else
+// 				$("form p").text("Please allow us to access your location.");
+// 		}
+// 	});
+// }
 
 function logInUser(email, password, type) {
 	var credentials = {
@@ -80,7 +80,16 @@ function logInUser(email, password, type) {
 			else
 				window.location.replace("/profile");
 		}
+	}).then(function(){
+
+	$.ajax({
+		type: "POST",
+		url: "/api/set-matches",
+		data: credentials
+	}).then(function(data){
+		console.log(data);
 	});
+});
 }
 
 function showIndicator(){
@@ -92,13 +101,13 @@ function hideLoader(){
 }
 
 $(document).ready(function(){
-	$(".signUp").on("click", function(event){
-		event.preventDefault();
-		var newEmail = $("input[name=email]").val();
-		var newPassword = $("input[name=password]").val();
+	// $(".signUp").on("click", function(event){
+	// 	event.preventDefault();
+	// 	var newEmail = $("input[name=email]").val();
+	// 	var newPassword = $("input[name=password]").val();
 
-		getLocation(newEmail, newPassword);
-	});
+	// 	getLocation(newEmail, newPassword);
+	// });
 
 	$(".signIn").on("click", function(event){
 		event.preventDefault();

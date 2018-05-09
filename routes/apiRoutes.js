@@ -4,32 +4,32 @@ var passport = require("../config/passport.js");
 //new user api
 module.exports = function(app) {
 
-  var maxdistance;
-  var myLatitude;
-  var myLongitude;
+  // var maxdistance;
+  // var myLatitude;
+  // var myLongitude;
 
-  app.post("/api/new-user", function(req, res, next) {
-    var lastid;
-    var newEmail = req.body.email;
-    var newPassword = req.body.password;
-    myLatitude = req.body.latitude;
-    myLongitude = req.body.longitude;
+  // app.post("/api/new-user", function(req, res, next) {
+  //   var lastid;
+  //   var newEmail = req.body.email;
+  //   var newPassword = req.body.password;
+  //   myLatitude = req.body.latitude;
+  //   myLongitude = req.body.longitude;
 
-    db.User.create({
-      email: newEmail,
-      password: newPassword,
-      latitude: myLatitude,
-      longitude: myLongitude
-    }).then(function(result) {
-      db.Match.create({
-        email: newEmail,
-        UserId: result.id
-      });
-      res.json("success");
-    }).catch(function(error){
-      res.json(error); 
-    });  
-  });
+  //   db.User.create({
+  //     email: newEmail,
+  //     password: newPassword,
+  //     latitude: myLatitude,
+  //     longitude: myLongitude
+  //   }).then(function(result) {
+  //     db.Match.create({
+  //       email: newEmail,
+  //       UserId: result.id
+  //     });
+  //     res.json("success");
+  //   }).catch(function(error){
+  //     res.json(error); 
+  //   });  
+  // });
 
 //authenticates returning user
   app.post("/api/login-user", function(req, res, next) {
@@ -48,6 +48,83 @@ module.exports = function(app) {
         });
       }
     })(req, res, next);
+  });
+
+  //demo version setting demo profile and matches
+
+app.post("/api/set-matches", function(req, res, next) {
+    if(req.body.email!=="demo@email.com"){
+      return
+    }
+    else{
+
+      db.Form.upsert({
+        email: "demo@email.com",
+        name: "Katharine",
+        gender: "Female",
+        dob: "1992-04-26 00:00:00",
+        img: "https://kinections2.s3.amazonaws.com/demoemailcom",
+        fileName: "demoemailcom",
+        primaryLocation: "Austin, TX",
+        weightlift: 1,
+        run: 0,
+        walk: 0,
+        swim: 1,
+        surf: 0,
+        bike: 0,
+        yoga: 1,
+        pilates: 0,
+        cardio: 1,
+        dance: 0,
+        rock: 0,
+        gymnastics: 0,
+        bowl: 0,
+        rowing: 0,
+        tennis: 0,
+        baseball: 0,
+        basketball: 0,
+        football: 0,
+        soccer: 0,
+        rugby: 0,
+        volleyball: 0,
+        golf: 0,
+        hockey: 0,
+        ice: 0,
+        skateboard: 0,
+        bio: "Thanks for looking around our app! This demo version was created for you to experience the app with robust membership. If you'd like to interact with the original version, check out https://kinections.herokuapp.com/",
+        UserId: 1
+      }).catch(function(error){
+        res.json("error"); 
+      });
+
+      db.Match.upsert({
+        email: "demo@email.com",
+        name: "Katharine",
+        myMatches: "2,3,5,8,11,13",
+        myLikes: "2,3,5,8,11,13",
+        myChats: 5,
+        UserId: 1
+      }).catch(function(error){
+        res.json("error"); 
+      });
+
+      db.Message.destroy({
+        where: {},
+        truncate: true
+      }).then(function(){
+
+        db.Message.upsert({
+          UserId: 5,
+          FriendId: 1,
+          chat_messages: "Hi there! I've been looking for another female to spot me when I lift. Do you have a preference on when and where you work out?",
+        }).then(function(){
+          res.json("next");
+        }).catch(function(error){
+          res.json("error"); 
+        });
+
+    });
+    }
   });
 
 //sends form data to database
@@ -187,9 +264,9 @@ module.exports = function(app) {
       where: {
         email: req.user.email
       }
-    }).then(function(response){
-      myLatitude=response.latitude;
-      myLongitude=response.longitude;
+    // }).then(function(response){      
+      // myLatitude=response.latitude;
+      // myLongitude=response.longitude;
     });
 
 
@@ -218,13 +295,13 @@ module.exports = function(app) {
     },
       include:[db.User]
     }).then(function(data){
-      filterResults(res,req,data,maxdistance)
+      filterResults(res,req,data)
       });    
   });
 
   function filterResults(res,req,data,maxdistance){
-    var userlong;
-    var userlat;
+    // var userlong;
+    // var userlat;
 
     var promises=[];
 
@@ -235,10 +312,10 @@ module.exports = function(app) {
           email: data[i].email
         }
       }).then(function(userdata){
-          userlong=userdata.longitude;
-          userlat=userdata.latitude;
+          // userlong=userdata.longitude;
+          // userlat=userdata.latitude;
 
-          if (getDistance(userlat,userlong,myLatitude,myLongitude)<=maxdistance)
+          // if (getDistance(userlat,userlong,myLatitude,myLongitude)<=maxdistance)
               nearOptions.push(userdata);
       });
       promises.push(promise);
@@ -249,17 +326,17 @@ module.exports = function(app) {
     });
   }
 
-  function getDistance(latitude1,longitude1,latitude2,longitude2) {
-    var radlatitude1 = Math.PI * latitude1 / 180;
-    var radlatitude2 = Math.PI * latitude2 / 180;
-    var theta = longitude1 - longitude2;
-    var radtheta = Math.PI * theta / 180;
-    var distance = Math.sin(radlatitude1) * Math.sin(radlatitude2) + Math.cos(radlatitude1) * Math.cos(radlatitude2) * Math.cos(radtheta);
-    distance = Math.acos(distance);
-    distance = distance * 180 / Math.PI;
-    distance = distance * 60 * 1.1515;
-    return distance;
-  }
+  // function getDistance(latitude1,longitude1,latitude2,longitude2) {
+  //   var radlatitude1 = Math.PI * latitude1 / 180;
+  //   var radlatitude2 = Math.PI * latitude2 / 180;
+  //   var theta = longitude1 - longitude2;
+  //   var radtheta = Math.PI * theta / 180;
+  //   var distance = Math.sin(radlatitude1) * Math.sin(radlatitude2) + Math.cos(radlatitude1) * Math.cos(radlatitude2) * Math.cos(radtheta);
+  //   distance = Math.acos(distance);
+  //   distance = distance * 180 / Math.PI;
+  //   distance = distance * 60 * 1.1515;
+  //   return distance;
+  // }
 
   function removeMatches(res, req, lessUsers){
     var myLikes=[];
@@ -272,6 +349,7 @@ module.exports = function(app) {
     }).then(function(mydata){
         if(mydata.myLikes !== null)
           myLikes=mydata.myLikes.split(",");
+
 
         for(var i=0;i<lessUsers.length;i++){
           if(myLikes.indexOf(lessUsers[i].id.toString())===-1){
@@ -308,7 +386,6 @@ module.exports = function(app) {
 
   //this will push id into likes
   app.post("/api/change-likes", function(req, res) {
-    console.log("here"+req);
     var myLikes;
     var theirLikes;
     var myId = req.session.passport.user.id;
@@ -436,7 +513,7 @@ module.exports = function(app) {
   app.get("/api/myMatches",function(req,res){
     db.Match.findOne({
       where:{
-        UserID:req.session.passport.user.id
+        UserID:1
       }
     }).then(function(matchdata){
       var chats=matchdata.dataValues.myChats;
@@ -497,7 +574,7 @@ function pullMatches(res,matches){
   app.get("/api/myChats",function(req,res){
     db.Match.findOne({
       where:{
-        UserId:req.session.passport.user.id
+        UserId:1
       }
     }).then(function(matchdata){
       var chats=matchdata.dataValues.myChats;
@@ -541,7 +618,7 @@ function pullChats(res,chats){
   app.post("/api/getUserInfo", function(req, res){
     db.Form.findOne({
       where: {
-        UserId: req.body.id 
+        UserId: 1
       }
     }).then(function(userInfo){
       res.json(userInfo);
