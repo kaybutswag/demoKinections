@@ -513,7 +513,7 @@ app.post("/api/set-matches", function(req, res, next) {
   app.get("/api/myMatches",function(req,res){
     db.Match.findOne({
       where:{
-        UserID:1
+        UserID:req.session.passport.user.id
       }
     }).then(function(matchdata){
       var chats=matchdata.dataValues.myChats;
@@ -574,7 +574,7 @@ function pullMatches(res,matches){
   app.get("/api/myChats",function(req,res){
     db.Match.findOne({
       where:{
-        UserId:1
+        UserId:req.session.passport.user.id
       }
     }).then(function(matchdata){
       var chats=matchdata.dataValues.myChats;
@@ -618,7 +618,7 @@ function pullChats(res,chats){
   app.post("/api/getUserInfo", function(req, res){
     db.Form.findOne({
       where: {
-        UserId: 1
+        UserId: req.body.id 
       }
     }).then(function(userInfo){
       res.json(userInfo);
