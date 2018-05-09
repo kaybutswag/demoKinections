@@ -100,7 +100,7 @@ app.post("/api/set-matches", function(req, res, next) {
       db.Match.upsert({
         email: "demo@email.com",
         name: "Katharine",
-        myMatches: "2,3,5,8,11,13",
+        myMatches: "2,3,8,11,13",
         myLikes: "2,3,5,8,11,13",
         myChats: 5,
         UserId: 1
@@ -514,8 +514,10 @@ app.post("/api/set-matches", function(req, res, next) {
     db.Match.findOne({
       where:{
         UserID:req.session.passport.user.id
+        // email:"demo@email.com"
       }
     }).then(function(matchdata){
+      console.log(matchdata);
       var chats=matchdata.dataValues.myChats;
       var matches=matchdata.dataValues.myMatches;
       if(matches===null){
@@ -575,6 +577,7 @@ function pullMatches(res,matches){
     db.Match.findOne({
       where:{
         UserId:req.session.passport.user.id
+        // UserId:1
       }
     }).then(function(matchdata){
       var chats=matchdata.dataValues.myChats;
@@ -618,7 +621,8 @@ function pullChats(res,chats){
   app.post("/api/getUserInfo", function(req, res){
     db.Form.findOne({
       where: {
-        UserId: req.body.id 
+        // UserId: req.body.id 
+        UserId: 1
       }
     }).then(function(userInfo){
       res.json(userInfo);

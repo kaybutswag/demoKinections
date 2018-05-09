@@ -1,5 +1,6 @@
 
 function generateChatHistory(screenFriendId) {
+  console.log(screenFriendId);
   var chathistory={
     FriendId:screenFriendId
   };
